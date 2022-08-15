@@ -1,0 +1,90 @@
+﻿@inject IViewProductByCategoryId ViewProductByCategoryId
+@inject IViewCategoriesUseCase IViewCategoriesUseCase
+
+
+
+
+<div class="form-group">
+    <lable for="category">Category</lable>
+    <select id="category" @bind="SelectCategoryById" class="form-control">
+        <option selected></option>
+        @foreach (var cat in categories)
+        {
+            <option value="@cat.CategoryId">@cat.Name</option>
+        }
+
+    </select>
+</div>
+@if (productsInCategory != null)
+{
+    <table class= "table" >
+        <thead>
+            <tr>
+                <th>
+                    Product Name
+                </th>
+                <th>
+                    Qty
+                </th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var prod in productsInCategory)
+            {
+                <tr @onclick="@(()=>OnSelectProduct(prod))" 
+                    style=@(prod.ProductId==selectedProductId?"background-color: beige; cursor:pointer; " : "cursor:pointer;")>
+                    <th>
+                        @prod.Name
+                    </th>
+                    <th>
+                        @prod.Quantity
+                    </th>
+                </tr>
+            }
+
+
+        </tbody>
+
+    </table>
+}
+
+@code {
+    private IEnumerable <Product> productsInCategory;
+    private int selectedProductId;
+    [Parameter]
+    public EventCallback<Product> OnProductSelected {get; set;}
+
+
+    private int selectCategoryById;
+    private int SelectCategoryById
+    {
+        get
+        {
+            return selectCategoryById;
+        }
+        set
+        {
+            selectCategoryById = value;
+            productsInCategory = ViewProductByCategoryId.Execute(value);
+
+        }
+    }
+
+    private IEnumerable<Category> categories;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        categories = IViewCategoriesUseCase.Execute();
+        StateHasChanged();
+    }
+    private void OnSelectProduct(Product product)
+    {
+       
+        OnProductSelected.InvokeAsync(product);
+         if(product!=null) selectedProductId = product.ProductId;
+    }
+
+
+}

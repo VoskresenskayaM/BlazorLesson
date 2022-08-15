@@ -1,0 +1,86 @@
+﻿
+@page "/editproduct/{productId}"
+@attribute [Authorize(Policy ="AdminOnly")]
+
+@using UseCases
+@inject NavigationManager NavigationManager
+@inject IEditProductUseCase EditProductUseCase
+@inject IGetCategoryByIdUseCase GetCategoryByIdUseCase
+@inject IViewCategoriesUseCase  ViewCategoriesUseCase
+@inject IGetProductByIdUseCase GetProductByIdUseCase
+ 
+<h3>Edit Product</h3>
+@if (product != null)
+{
+    <EditForm Model="product"  OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+
+        <div class="form-group">
+            <lable for="name">Name</lable>
+            <InputText id="name" @bind-Value="product.Name" class="form-control"></InputText>
+        </div>
+
+        <div class="form-group">
+            <lable for="category">Category</lable>
+            <select id="category" @bind="product.CategoryId" class="form-control">
+                <option  value="@GetCategoryByIdUseCase.Execute(product.CategoryId.Value)"></option>   
+                @foreach (var cat in Categorys)
+                {
+                    <option value="@cat.CategoryId">@cat.Name</option>
+                }
+
+            </select>
+        </div>
+
+        <div class="form-group">
+            <lable for="quantity">Quantity</lable>
+            <InputNumber id="quantity" @bind-Value="product.Quantity" class="form-control"></InputNumber>
+        </div>
+
+        <div class="form-group">
+            <lable for="price">Price</lable>
+            <InputNumber id="price" @bind-Value="product.Price"  @bind-Value:format="F2" class="form-control"></InputNumber>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary" @onclick="OnCancel">Cansel</button>
+    </EditForm>
+}
+
+@code {
+    public Product product { get; set; }
+    public List<Category> Categorys { get; set; }
+
+   [Parameter]
+    public string ProductId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Categorys = ViewCategoriesUseCase.Execute().ToList();
+    }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (int.TryParse(this.ProductId, out int iProductId))
+        {
+
+            var prod =   GetProductByIdUseCase.Execute(iProductId);
+            this.product = new Product { ProductId = prod.ProductId, CategoryId = prod.CategoryId, Name = prod.Name, Price = prod.Price, Quantity = prod.Quantity };
+    }
+
+    }
+    public void OnValidSubmit()
+    {
+        EditProductUseCase.Execute(product);
+        NavigationManager.NavigateTo("/products");
+
+    }
+    public void OnCancel()
+    {
+          NavigationManager.NavigateTo("/products");
+    }
+}
